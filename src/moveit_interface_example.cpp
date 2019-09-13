@@ -1,7 +1,15 @@
 #include <ros/ros.h>
-#include <moveit_interface_example/MoveitPlanner.h>
+#include <moveit/move_group_interface/move_group_interface.h>
 
 using namespace moveit::planning_interface;
+
+MoveItErrorCode moveByJointValues(MoveGroupInterface &moveGroup, const std::vector<double> &jointRadians){
+    if (!moveGroup.setJointValueTarget(jointRadians))
+    {
+        return moveit::planning_interface::MoveItErrorCode(moveit_msgs::MoveItErrorCodes::INVALID_GOAL_CONSTRAINTS);
+    }
+    return moveGroup.move();
+}
 
 int main(int argc, char **argv)
 {
@@ -12,10 +20,12 @@ int main(int argc, char **argv)
     ros::AsyncSpinner spinner(2);
     spinner.start();
 
-    MoveitPlanner moveitPlanner("move_group");
+    MoveGroupInterface moveGroupInterface("arm");
+
+    moveGroupInterface.setMaxVelocityScalingFactor(1.0);
 
     const std::vector<double> jointRadians = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    const auto moveResult = moveitPlanner.moveByJointValues(jointRadians);
+    const auto moveResult = moveByJointValues(moveGroupInterface, jointRadians);
 
     if (moveResult == MoveItErrorCode::SUCCESS)
     {
